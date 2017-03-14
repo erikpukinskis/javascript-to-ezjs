@@ -19,8 +19,18 @@ module.exports = library.export(
       var lines = source.split("\n")
   
       if (lines.length > 1) {
-        lines.forEach(jsToEzjs)
-        return expression
+        var out = undefined
+
+        lines.forEach(function(line) {
+          var newExpr = jsToEzjs(line)
+
+          if (newExpr && !out) {
+            out = newExpr
+          }
+        })
+
+        return out
+
       } else {
         source = source.trim()
       }
@@ -62,7 +72,11 @@ module.exports = library.export(
 
         expression.body = []
 
+        addToParent(stack, expression)
         stack.push(expression)
+
+        return expression
+
       } else if (functionLiteralEnd) {
         jsToEzjs(functionLiteralEnd[1])
         log("function literal end!", source)
@@ -126,7 +140,8 @@ module.exports = library.export(
       }
 
       if (understood) {
-        return
+        // we're good
+
       } else if (argumentString) {
         log("argument string!", source)
 
@@ -159,6 +174,8 @@ module.exports = library.export(
       } else {
         log("don't understand:", source)
       }
+
+
     }
 
     function pop(stack, kind) {
@@ -172,11 +189,19 @@ module.exports = library.export(
     function addToParent(stack, item) {
       var parent = stack[stack.length-1]
 
+      if (stack.length < 1) {
+        log("no parent to add to")
+        return
+      }
+
+      var message = "adding "+what(item)+" to "+what(parent)
+
       switch (parent.kind) {
         case "function literal":
           parent.body.push(item)
           break;
         case "function call":
+          message += " as argument"
           parent.arguments.push(item)
           break;
         case "array literal":
@@ -184,6 +209,26 @@ module.exports = library.export(
           break;
         default:
           throw new Error("Don't know how to add to a "+parent+" expression")
+      }
+
+      log(message)
+    }
+
+    function what(it) {
+      switch (it.kind) {
+        case "function literal":
+          return "function literal"
+        case "function call":
+          return "call "+it.functionName
+        case "array literal":
+          return "array"
+        case "variable reference":
+          return "var "+it.variableName
+        case "string literal":
+        case "number literal":
+          return JSON.stringify(it.string || it.number)
+        default:
+          throw new Error("Don't know what "+it.kind+" is")
       }
     }
 

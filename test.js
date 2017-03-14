@@ -1,12 +1,9 @@
 var runTest = require("run-test")(require)
 
-// runTest.only("function calls can have variable references, numbers, booleans inline")
-
 runTest(
   "function calls can have variable references, numbers, booleans inline",
   ["./"],
   function(expect, done, jsToEz) {
-
 
     function foo() {
       bless(this,
@@ -67,5 +64,37 @@ runTest(
   }
 )
 
-runTest("Call args that are string literals, function literals, object literals are always on new lines")
+
+runTest(
+  "function literals args",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    function foo() {
+      fun(
+        function() {
+          boo()
+        }
+      )
+    }
+
+    // jsToEz.loud = true
+
+    // console.log("\nFunction:\n", foo.toString()+"\n")
+
+    var expr = jsToEz(foo.toString())
+
+    // console.log("\nExpression: \n", JSON.stringify(expr, null, 2))
+
+    var fun = expr.body[0]
+    expect(fun.arguments[0].kind).to.equal("function literal")
+
+    expect(fun.arguments[0].body[0].functionName).to.equal("boo")
+
+    done()
+  }
+)
+
+runTest("object literal args")
+
 
