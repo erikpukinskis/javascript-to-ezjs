@@ -105,7 +105,8 @@ module.exports = library.export(
       } else if (stringLiteral) {
         var literal = {
           kind: "string literal",
-          string: eval(stringLiteral[1])
+          string: eval(stringLiteral[1]),
+          id: anExpression.id(),
         }
 
         addToParent(stack, literal)
