@@ -26,7 +26,10 @@ runTest(
 
     var array = tootCall.arguments[0]
     expect(array.kind).to.equal("array literal")
-    
+
+    var frootCall = expr.body[1]
+    expect(frootCall.kind).to.equal("function call")
+
     done()
   }
 )

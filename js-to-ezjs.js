@@ -8,6 +8,8 @@ module.exports = library.export(
     var stack = []
 
     function jsToEzjs(source) {
+      if (source.length < 1) { return }
+        
       var lines = source.split("\n")
   
       if (lines.length > 1) {
@@ -20,10 +22,12 @@ module.exports = library.export(
       var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
 
       var functionCallStart = source.match(/^([^ ,"'(){}]+)[(](.*)$/)
+      var functionCallEnd = source.match(/^\)(.*)$/)
 
       var stringLiteral = source.match(/^(".*"),?$/)
 
       var arrayLiteralStart = source.match(/^\[$/)
+      var arrayLiteralEnd = source.match(/^\](.*)$/)
 
       if (functionLiteralStart) {
         var name = functionLiteralStart[1]
@@ -60,6 +64,11 @@ module.exports = library.export(
 
         jsToEzjs(functionCallStart[2])
 
+      } else if (functionCallEnd) {
+        stack.pop(stack, "function call")
+        console.log("call end!", source)
+        jsToEzjs(functionCallEnd[1])
+
       } else if (stringLiteral) {
         var literal = {
           kind: "string literal",
@@ -79,9 +88,21 @@ module.exports = library.export(
         addToParent(stack, arr)
 
         stack.push(arr)
+      } else if (arrayLiteralEnd) {
+        var arr = pop(stack, "array literal")
+        console.log("array end!", source)
+        jsToEzjs(arrayLiteralEnd[1])
       } else {
         console.log("don't understand:", source)
       }
+    }
+
+    function pop(stack, kind) {
+      var arr = stack.pop()
+      if (arr.kind != kind) {
+        throw new Error("Thought we were closing an "+kind+", but the top of the stack is "+(arr && arr.kind))
+      }
+
     }
 
     function addToParent(stack, item) {
