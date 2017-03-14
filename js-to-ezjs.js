@@ -7,9 +7,15 @@ module.exports = library.export(
 
     var stack = []
 
+    function log() {
+      if (!jsToEzjs.loud) { return }
+
+      console.log.apply(console, arguments)
+    }
+
     function jsToEzjs(source) {
       if (source.length < 1) { return }
-        
+
       var lines = source.split("\n")
   
       if (lines.length > 1) {
@@ -20,16 +26,24 @@ module.exports = library.export(
       }
 
       var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
+      var functionLiteralEnd = !functionLiteralStart && source.match(/^(.*)\}$/)
 
-      var functionCallStart = source.match(/^([^ ,"'(){}]+)[(](.*)$/)
-      var functionCallEnd = source.match(/^\)(.*)$/)
+      var functionCallStart = !functionLiteralEnd && source.match(/^([^ ,"'(){}]+)[(](.*)$/)
+      var functionCallEnd = !functionCallStart && source.match(/^(.*)\)$/)
 
-      var stringLiteral = source.match(/^(".*"),?$/)
+      var stringLiteral = !functionCallEnd && source.match(/^(".*"),?$/)
 
-      var arrayLiteralStart = source.match(/^\[$/)
-      var arrayLiteralEnd = source.match(/^\](.*)$/)
+      var arrayLiteralStart = !stringLiteral && source.match(/^\[$/)
+      var arrayLiteralEnd = !arrayLiteralStart && source.match(/^(.*)\]$/)
 
-      if (functionLiteralStart) {
+      var comment = !arrayLiteralEnd && source.match(/^\/\//)
+
+      var understood = true
+
+      if (comment) {
+        // do nothing
+
+      } else if (functionLiteralStart) {
         var name = functionLiteralStart[1]
 
         expression = {
@@ -38,7 +52,7 @@ module.exports = library.export(
           id: anExpression.id(),
         }
 
-        console.log("function literal start!", source)
+        log("function literal start!", source)
 
         if (name.length > 0) {
           expression.functionName = name
@@ -49,8 +63,13 @@ module.exports = library.export(
         expression.body = []
 
         stack.push(expression)
+      } else if (functionLiteralEnd) {
+        jsToEzjs(functionLiteralEnd[1])
+        log("function literal end!", source)
+        pop(stack, "function literal")
+
       } else if (functionCallStart) {
-        console.log("function call start!", source)
+        log("function call start!", source)
 
         var call = {
           kind: "function call",
@@ -65,9 +84,9 @@ module.exports = library.export(
         jsToEzjs(functionCallStart[2])
 
       } else if (functionCallEnd) {
-        stack.pop(stack, "function call")
-        console.log("call end!", source)
         jsToEzjs(functionCallEnd[1])
+        stack.pop(stack, "function call")
+        log("call end!", source)
 
       } else if (stringLiteral) {
         var literal = {
@@ -77,9 +96,9 @@ module.exports = library.export(
 
         addToParent(stack, literal)
 
-        console.log("string literal!", source)
+        log("string literal!", source)
       } else if (arrayLiteralStart) {
-        console.log("array literal!", source)
+        log("array literal!", source)
         var arr = {
           kind: "array literal",
           items: [],
@@ -89,11 +108,56 @@ module.exports = library.export(
 
         stack.push(arr)
       } else if (arrayLiteralEnd) {
-        var arr = pop(stack, "array literal")
-        console.log("array end!", source)
         jsToEzjs(arrayLiteralEnd[1])
+        var arr = pop(stack, "array literal")
+        log("array end!", source)
       } else {
-        console.log("don't understand:", source)
+
+        understood = false
+        // ROUND 2 of matching!
+
+        var argumentString = source.match(/(.*,.*)([)]?)/)
+
+        var booleanLiteral = !argumentString && source.match(/^(true|false)$/)
+
+        var numberLiteral = !booleanLiteral && source.match(/^[0-9.]*$/)
+
+        var reference = !numberLiteral && source.match(/^[^ -(){}.]+$/)
+      }
+
+      if (understood) {
+        return
+      } else if (argumentString) {
+        log("argument string!", source)
+
+        var argSources = argumentString[0].split(",")
+
+        argSources.forEach(jsToEzjs)
+
+      } else if (numberLiteral) {
+        log("number literal!", source)
+
+        var literal = {
+          kind: "number literal",
+          number: eval(source),
+          id: anExpression.id(),
+        }
+
+        addToParent(stack, literal)
+
+      } else if (reference) {
+        log("reference!", source)
+
+        var ref = {
+          kind: "variable reference",
+          variableName: source,
+          id: anExpression.id(),
+        }
+
+        addToParent(stack, ref)
+
+      } else {
+        log("don't understand:", source)
       }
     }
 
@@ -107,10 +171,10 @@ module.exports = library.export(
 
     function addToParent(stack, item) {
       var parent = stack[stack.length-1]
+
       switch (parent.kind) {
         case "function literal":
           parent.body.push(item)
-          console.log("added body[0]", parent.body[0])
           break;
         case "function call":
           parent.arguments.push(item)
