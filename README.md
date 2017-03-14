@@ -2,7 +2,7 @@
 
 Rather than attempting to parse every possible JavaScript program, it only understands a very small subset of language features, and it forces you to be very careful with syntax.
 
-##Allowed expressions
+## Allowed expressions
 
 * variable assignment
 * variable references
@@ -37,7 +37,7 @@ This makes parsing simpler.
 
 ## Why
 
-We needed a simple JavaScript importer for render-expression.
+We needed a simple JavaScript importer for an-expression.
 
 JavaScript has been adding language features like the kitchen sink lately. This has left an opening in the market for a language with few features that runs on every device. There is a subset of JavaScript which still serves that purpose. This module is a straw man attempting to define that subset.
 
