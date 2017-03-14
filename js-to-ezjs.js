@@ -52,6 +52,8 @@ module.exports = library.export(
 
       var returnStatement = !comment && source.match(/^return (.*)$/)
 
+      var variableAssignment = !returnStatement && source.match(/^var ([^-{(]+) *= *(.*)$/)
+
       var understood = true
 
       if (comment) {
@@ -65,16 +67,24 @@ module.exports = library.export(
         addToParent(stack, expression)
         stack.push(expression)
         log("return statement!", source)
-        log("leftover:", returnStatement[1])
         jsToEzjs(returnStatement[1])
-        pop(stack, "return statement")
+
+      } else if (variableAssignment) {
+        expression = {
+          kind: "variable assignment",
+          id: anExpression.id(),
+          variableName: variableAssignment[1],
+        }
+        addToParent(stack, expression)
+        stack.push(expression)
+        log("assignment!", source)
+        jsToEzjs(variableAssignment[2])
 
       } else if (functionLiteralStart) {
         var name = functionLiteralStart[1]
 
         expression = {
           kind: "function literal",
-          body: [],
           id: anExpression.id(),
         }
 
@@ -103,9 +113,9 @@ module.exports = library.export(
 
         var call = {
           kind: "function call",
+          id: anExpression.id(),
           functionName: functionCallStart[1],
           arguments: [],
-          id: anExpression.id()
         }
 
         addToParent(stack, call)
@@ -121,8 +131,8 @@ module.exports = library.export(
       } else if (stringLiteral) {
         var literal = {
           kind: "string literal",
-          string: eval(stringLiteral[1]),
           id: anExpression.id(),
+          string: eval(stringLiteral[1]),
         }
 
         addToParent(stack, literal)
@@ -143,8 +153,8 @@ module.exports = library.export(
         log("array literal!", source)
         var arr = {
           kind: "array literal",
-          items: [],
           id: anExpression.id(),
+          items: [],
         }
         addToParent(stack, arr)
 
@@ -156,6 +166,7 @@ module.exports = library.export(
       } else {
 
         understood = false
+
         // ROUND 2 of matching!
 
         var argumentString = source.match(/(.*,.*)([)]?)/)
@@ -182,8 +193,8 @@ module.exports = library.export(
 
         var literal = {
           kind: "number literal",
-          number: eval(source),
           id: anExpression.id(),
+          number: eval(source),
         }
 
         addToParent(stack, literal)
@@ -193,8 +204,8 @@ module.exports = library.export(
 
         var ref = {
           kind: "variable reference",
-          variableName: source,
           id: anExpression.id(),
+          variableName: source,
         }
 
         addToParent(stack, ref)
@@ -237,11 +248,12 @@ module.exports = library.export(
           parent.items.push(item)
           break;
         case "return statement":
-        case "variable assignment":
-          if (parent.expression) {
-            throw new Error("can't add two expressions to "+what(parent))
-          }
           parent.expression = item
+          pop(stack, "return statement")
+          break;
+        case "variable assignment":
+          parent.expression = item
+          pop(stack, "variable assignment")
           break;
         default:
           throw new Error("Don't know how to add to a "+parent+" expression")
@@ -260,7 +272,9 @@ module.exports = library.export(
         case "array literal":
           return "array"
         case "variable reference":
-          return "var "+it.variableName
+          return "reference to var "+it.variableName
+        case "variable assignment":
+          return "assigning to var "+it.variableName
         case "string literal":
         case "number literal":
           return JSON.stringify(it.string || it.number)
@@ -272,17 +286,6 @@ module.exports = library.export(
           throw new Error("Don't know what "+it.kind+" is")
       }
     }
-
-    // function addCallArgs(call, match) {
-    //   var argSources = match[2].split(",")
-
-    //   for(var i=0; i<argSources.length; i++) {
-    //     var arg = jsToEzjs(argSources[i])
-    //     if (arg) {
-    //       call.arguments.push(arg)
-    //     }
-    //   }
-    // }
 
     function argumentNames(func) {
       if (typeof func == "string") {

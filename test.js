@@ -1,6 +1,6 @@
 var runTest = require("run-test")(require)
 
-// runTest.only("understand objects and returns")
+// runTest.only("understand a real function")
 
 runTest(
   "function calls can have variable references, numbers, booleans inline",
@@ -126,3 +126,38 @@ runTest(
   }
 )
 
+runTest(
+  "understand a real function",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    function foo(element, basicStyles) {
+
+      function renderPitch(voxel) {
+
+        var letter = element([
+          element(
+            "img.hero",
+            {"src": "/housing-bond/tiny.jpg"}
+          ),
+          element(
+            "Dear friends,"
+          ),
+        ])
+      }
+
+      return renderPitch
+    }
+
+    // jsToEz.loud = true
+
+    // console.log("\nFunction:\n", foo.toString()+"\n")
+
+    var expr = jsToEz(foo.toString())
+
+    // console.log("\nExpression: \n", JSON.stringify(expr, null, 2))
+
+    done()
+
+  }
+)
