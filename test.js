@@ -1,5 +1,7 @@
 var runTest = require("run-test")(require)
 
+// runTest.only("understand objects and returns")
+
 runTest(
   "function calls can have variable references, numbers, booleans inline",
   ["./"],
@@ -95,6 +97,32 @@ runTest(
   }
 )
 
-runTest("object literal args")
+runTest(
+  "understand objects and returns",
+  ["./"],
+  function(expect, done, jsToEz) {
 
+    function foo() {
+      return {"src": "/housing-bond/tiny.jpg"}
+    }
+
+    // jsToEz.loud = true
+
+    // console.log("\nFunction:\n", foo.toString()+"\n")
+
+    var expr = jsToEz(foo.toString())
+
+    // console.log("\nExpression: \n", JSON.stringify(expr, null, 2))
+
+    expect(expr.body[0].kind).to.equal("return statement")
+
+    var obj = expr.body[0].expression
+
+    expect(obj.kind).to.equal("object literal")
+
+    expect(obj.valuesByKey.src.string).to.equal("/housing-bond/tiny.jpg")
+
+    done()
+  }
+)
 

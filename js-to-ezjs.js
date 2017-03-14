@@ -36,7 +36,7 @@ module.exports = library.export(
       }
 
       var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
-      var functionLiteralEnd = !functionLiteralStart && source.match(/^(.*)\}$/)
+      var functionLiteralEnd = !functionLiteralStart && source.match(/^\}$/)
 
       var functionCallStart = !functionLiteralEnd && source.match(/^([^ ,"'(){}]+)[(](.*)$/)
       var functionCallEnd = !functionCallStart && source.match(/^(.*)\)$/)
@@ -46,12 +46,28 @@ module.exports = library.export(
       var arrayLiteralStart = !stringLiteral && source.match(/^\[$/)
       var arrayLiteralEnd = !arrayLiteralStart && source.match(/^(.*)\]$/)
 
-      var comment = !arrayLiteralEnd && source.match(/^\/\//)
+      var objectLiteral = !arrayLiteralEnd && source.match(/^\{[^:]+:/)
+
+      var comment = !objectLiteral && source.match(/^\/\//)
+
+      var returnStatement = !comment && source.match(/^return (.*)$/)
 
       var understood = true
 
       if (comment) {
         // do nothing
+
+      } else if (returnStatement) {
+        expression = {
+          kind: "return statement",
+          id: anExpression.id(),
+        }
+        addToParent(stack, expression)
+        stack.push(expression)
+        log("return statement!", source)
+        log("leftover:", returnStatement[1])
+        jsToEzjs(returnStatement[1])
+        pop(stack, "return statement")
 
       } else if (functionLiteralStart) {
         var name = functionLiteralStart[1]
@@ -78,7 +94,7 @@ module.exports = library.export(
         return expression
 
       } else if (functionLiteralEnd) {
-        jsToEzjs(functionLiteralEnd[1])
+        // jsToEzjs(functionLiteralEnd[1])
         log("function literal end!", source)
         pop(stack, "function literal")
 
@@ -112,6 +128,17 @@ module.exports = library.export(
         addToParent(stack, literal)
 
         log("string literal!", source)
+      } else if (objectLiteral) {
+        try {
+          var obj = JSON.parse(source)
+        } catch (e) {
+          console.log("The source code "+source+" looked like an object, but it failed to parse. Objects need to be valid JSON")
+        }
+
+        var literal = anExpression.objectLiteral(obj)
+        addToParent(stack, literal)
+        log("object literal!", source)
+
       } else if (arrayLiteralStart) {
         log("array literal!", source)
         var arr = {
@@ -180,9 +207,10 @@ module.exports = library.export(
     }
 
     function pop(stack, kind) {
-      var arr = stack.pop()
-      if (arr.kind != kind) {
-        throw new Error("Thought we were closing an "+kind+", but the top of the stack is "+(arr && arr.kind))
+      var top = stack.pop()
+
+      if (!top || top.kind != kind) {
+        throw new Error("Thought we were closing an "+kind+", but the top of the stack is "+(top && what(top)))
       }
 
     }
@@ -208,6 +236,13 @@ module.exports = library.export(
         case "array literal":
           parent.items.push(item)
           break;
+        case "return statement":
+        case "variable assignment":
+          if (parent.expression) {
+            throw new Error("can't add two expressions to "+what(parent))
+          }
+          parent.expression = item
+          break;
         default:
           throw new Error("Don't know how to add to a "+parent+" expression")
       }
@@ -216,11 +251,12 @@ module.exports = library.export(
     }
 
     function what(it) {
+      if (!it) { return "undefined" }
       switch (it.kind) {
         case "function literal":
           return "function literal"
         case "function call":
-          return "call "+it.functionName
+          return "calling "+it.functionName
         case "array literal":
           return "array"
         case "variable reference":
@@ -228,6 +264,10 @@ module.exports = library.export(
         case "string literal":
         case "number literal":
           return JSON.stringify(it.string || it.number)
+        case "return statement":
+          return "returning "+what(it.expression)
+        case "object literal":
+          return "object with keys "+JSON.stringify(Object.keys(it.valuesByKey))
         default:
           throw new Error("Don't know what "+it.kind+" is")
       }
