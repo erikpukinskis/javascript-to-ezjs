@@ -1,0 +1,20 @@
+{
+  "name": "javascript-to-ezjs",
+  "version": "0.0.0",
+  "description": "Convert a subset of JavaScript into a simple JSON-like format for editing",
+  "main": "js-to-ezjs.js",
+  "dependencies": {
+    "module-library": "*",
+    "an-expression": "*"
+  },
+  "devDependencies": {
+    "run-test": "*"
+  },
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erikpukinskis/javascript-to-ezjs.git"
+  }
+}
