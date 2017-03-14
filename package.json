@@ -1,6 +1,6 @@
 {
   "name": "javascript-to-ezjs",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Convert a subset of JavaScript into a simple JSON-like format for editing",
   "main": "js-to-ezjs.js",
   "dependencies": {
