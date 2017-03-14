@@ -19,7 +19,7 @@ That's it. Notably missing right now are loops, conditionals, constructors, and 
 
 You can use variables, functions, numbers, and booleans as inline function arguments (`setCount(42, true)`) but you must put strings and functions on their own line:
 
-````javascript
+```javascript
 function() {
   site.addRoute(
     "get",
