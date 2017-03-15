@@ -13,7 +13,7 @@ module.exports = library.export(
       console.log.apply(console, args)
     }
 
-    jsToEzjs.loud = true
+    // jsToEzjs.loud = true
 
     function jsToEzjs(source) {
       if (source.length < 1) { return }
