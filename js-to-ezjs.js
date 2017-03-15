@@ -13,7 +13,7 @@ module.exports = library.export(
       console.log.apply(console, args)
     }
 
-    // jsToEzjs.loud = true
+    jsToEzjs.loud = true
 
     function jsToEzjs(source) {
       if (source.length < 1) { return }
@@ -73,7 +73,7 @@ module.exports = library.export(
         }
         addToParent(stack, expression)
         stack.push(expression)
-        log("  +  return statement!", source)
+        log("  *  return statement!", source)
         jsToEzjs(returnStatement[1])
 
       } else if (variableAssignment) {
@@ -84,7 +84,7 @@ module.exports = library.export(
         }
         addToParent(stack, expression)
         stack.push(expression)
-        log("  +  assignment!", source)
+        log("  *  assignment!", source)
         jsToEzjs(variableAssignment[2])
 
       } else if (functionLiteralStart) {
@@ -95,7 +95,7 @@ module.exports = library.export(
           id: anExpression.id(),
         }
 
-        log("  +  function literal start!", source)
+        log("  *  function literal start!", source)
 
         if (name.length > 0) {
           expression.functionName = name
@@ -112,11 +112,11 @@ module.exports = library.export(
 
       } else if (functionLiteralEnd) {
         // jsToEzjs(functionLiteralEnd[1])
-        log("  +  function literal end!", source)
+        log("  *  function literal end!", source)
         pop(stack, "function literal")
 
       } else if (functionCallStart) {
-        log("  +  function call start!", source)
+        log("  *  function call start!", source)
 
         var call = {
           kind: "function call",
@@ -133,7 +133,7 @@ module.exports = library.export(
       } else if (functionCallEnd) {
         jsToEzjs(functionCallEnd[1])
         stack.pop(stack, "function call")
-        log("  +  call end!", source)
+        log("  *  call end!", source)
 
       } else if (stringLiteral) {
         var literal = {
@@ -144,7 +144,7 @@ module.exports = library.export(
 
         addToParent(stack, literal)
 
-        log("  +  string literal!", source)
+        log("  *  string literal!", source)
       } else if (objectLiteral) {
         try {
           var obj = JSON.parse(source)
@@ -154,10 +154,10 @@ module.exports = library.export(
 
         var literal = anExpression.objectLiteral(obj)
         addToParent(stack, literal)
-        log("  +  object literal!", source)
+        log("  *  object literal!", source)
 
       } else if (arrayLiteralStart) {
-        log("  +  array literal!", source)
+        log("  *  array literal!", source)
         var arr = {
           kind: "array literal",
           id: anExpression.id(),
@@ -169,7 +169,7 @@ module.exports = library.export(
       } else if (arrayLiteralEnd) {
         jsToEzjs(arrayLiteralEnd[1])
         var arr = pop(stack, "array literal")
-        log("  +  array end!", source)
+        log("  *  array end!", source)
       } else {
 
         understood = false
@@ -189,14 +189,14 @@ module.exports = library.export(
         // we're good
 
       } else if (argumentString) {
-        log("  +  argument string!", source)
+        log("  *  argument string!", source)
 
         var argSources = argumentString[0].split(",")
 
         argSources.forEach(jsToEzjs)
 
       } else if (numberLiteral) {
-        log("  +  number literal!", source)
+        log("  *  number literal!", source)
 
         var literal = {
           kind: "number literal",
@@ -207,7 +207,7 @@ module.exports = library.export(
         addToParent(stack, literal)
 
       } else if (reference) {
-        log("  +  reference!", source)
+        log("  *  reference!", source)
 
         var ref = {
           kind: "variable reference",
@@ -237,11 +237,11 @@ module.exports = library.export(
       var parent = stack[stack.length-1]
 
       if (stack.length < 1) {
-        log("no parent to add to")
+        log(" !!! no parent to add to")
         return
       }
 
-      var message = "adding "+what(item)+" to "+what(parent)
+      var message = " --> adding "+what(item)+" to "+what(parent)
 
       switch (parent.kind) {
         case "function literal":
