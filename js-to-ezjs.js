@@ -180,7 +180,7 @@ module.exports = library.export(
 
         var booleanLiteral = !argumentString && source.match(/^(true|false)$/)
 
-        var numberLiteral = !booleanLiteral && source.match(/^[0-9.]*$/)
+        var numberLiteral = !booleanLiteral && source.match(/^[0-9][0-9.]*$/)
 
         var reference = !numberLiteral && source.match(/^[^ -(){}.]+$/)
       }
