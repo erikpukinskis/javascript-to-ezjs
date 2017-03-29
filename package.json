@@ -8,7 +8,8 @@
     "an-expression": "*"
   },
   "devDependencies": {
-    "run-test": "*"
+    "run-test": "*",
+    "tell-the-universe": "*"
   },
   "scripts": {
     "test": "node test.js"

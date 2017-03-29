@@ -15,7 +15,7 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString())
+    var expr = jsToEz(foo.toString()).root()
 
     var bless = expr.body[0]
     expect(bless.arguments[0].kind).to.equal("variable reference")
@@ -42,7 +42,7 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString())
+    var expr = jsToEz(foo.toString()).root()
 
     expect(expr.kind).to.equal("function literal")
 
@@ -75,7 +75,7 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString())
+    var expr = jsToEz(foo.toString()).root()
 
     var fun = expr.body[0]
     expect(fun.arguments[0].kind).to.equal("function literal")
@@ -97,7 +97,7 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString())
+    var expr = jsToEz(foo.toString()).root()
 
     expect(expr.body[0].kind).to.equal("return statement")
 
@@ -136,7 +136,7 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString())
+    jsToEz(foo.toString())
 
     done()
 

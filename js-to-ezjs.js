@@ -8,39 +8,20 @@ module.exports = library.export(
     var stack = []
 
     function log() {
-      if (!jsToEzjs.loud) { return }
+      if (!javascriptToEzjs.loud) { return }
       var args = Array.prototype.slice.call(arguments)
       console.log.apply(console, args)
     }
 
-    // jsToEzjs.loud = true
+    // javascriptTo.loud = true
 
-    function jsToEzjs(source) {
+    function toEzjs(source) {
+
+      source = source.trim()
+
       if (source.length < 1) { return }
 
-      var lines = source.split("\n")
-  
-      if (lines.length > 1) {
-        var out = undefined
-
-        log("\nOriginal JavaScript:\n"+source+"\n")
-        lines.forEach(function(line) {
-          var newExpr = jsToEzjs(line)
-
-          if (newExpr && !out) {
-            out = newExpr
-          }
-        })
-
-        log("\nFinished expression:\n"+JSON.stringify(out, null, 2)+"\n")
-
-        jsToEzjs.loud = false
-
-        return out
-
-      } else {
-        source = source.trim()
-      }
+      var tree = this
 
       var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
       var functionLiteralEnd = !functionLiteralStart && source.match(/^\}$/)
@@ -74,18 +55,21 @@ module.exports = library.export(
         addToParent(stack, expression)
         stack.push(expression)
         log("  *  return statement!", source)
-        jsToEzjs(returnStatement[1])
+        toEzjs.call(tree, returnStatement[1])
 
       } else if (variableAssignment) {
         expression = {
           kind: "variable assignment",
           id: anExpression.id(),
           variableName: variableAssignment[1],
+          i: tree.reservePosition(),
         }
+
         addToParent(stack, expression)
+
         stack.push(expression)
         log("  *  assignment!", source)
-        jsToEzjs(variableAssignment[2])
+        toEzjs.call(tree, variableAssignment[2])
 
       } else if (functionLiteralStart) {
         var name = functionLiteralStart[1]
@@ -103,6 +87,8 @@ module.exports = library.export(
 
         expression.argumentNames = argumentNames(functionLiteralStart[2])
 
+        tree.addExpression(expression)
+
         expression.body = []
 
         addToParent(stack, expression)
@@ -111,7 +97,7 @@ module.exports = library.export(
         return expression
 
       } else if (functionLiteralEnd) {
-        // jsToEzjs(functionLiteralEnd[1])
+        // toEzjs.call(tree, functionLiteralEnd[1])
         log("  *  function literal end!", source)
         pop(stack, "function literal")
 
@@ -123,16 +109,21 @@ module.exports = library.export(
           id: anExpression.id(),
           functionName: functionCallStart[1],
           arguments: [],
+          i: tree.reservePosition(),
         }
 
         addToParent(stack, call)
         stack.push(call)
 
-        jsToEzjs(functionCallStart[2])
+        toEzjs.call(tree, functionCallStart[2])
 
       } else if (functionCallEnd) {
-        jsToEzjs(functionCallEnd[1])
-        stack.pop(stack, "function call")
+        toEzjs.call(tree, functionCallEnd[1])
+
+        var expression = pop(stack, "function call")
+
+        tree.addExpressionAt(expression, expression.i)
+
         log("  *  call end!", source)
 
       } else if (stringLiteral) {
@@ -143,6 +134,8 @@ module.exports = library.export(
         }
 
         addToParent(stack, literal)
+
+        tree.addExpression(literal)
 
         log("  *  string literal!", source)
       } else if (objectLiteral) {
@@ -162,13 +155,15 @@ module.exports = library.export(
           kind: "array literal",
           id: anExpression.id(),
           items: [],
+          i: tree.reservePosition()
         }
         addToParent(stack, arr)
 
         stack.push(arr)
       } else if (arrayLiteralEnd) {
-        jsToEzjs(arrayLiteralEnd[1])
+        toEzjs.call(tree, arrayLiteralEnd[1])
         var arr = pop(stack, "array literal")
+        tree.addExpressionAt(arr, arr.i)
         log("  *  array end!", source)
       } else {
 
@@ -193,7 +188,7 @@ module.exports = library.export(
 
         var argSources = argumentString[0].split(",")
 
-        argSources.forEach(jsToEzjs)
+        argSources.forEach(toEzjs.bind(tree))
 
       } else if (numberLiteral) {
         log("  *  number literal!", source)
@@ -231,6 +226,7 @@ module.exports = library.export(
         throw new Error("Thought we were closing an "+kind+", but the top of the stack is "+(top && what(top)))
       }
 
+      return top
     }
 
     function addToParent(stack, item) {
@@ -314,6 +310,34 @@ module.exports = library.export(
 
       return names
     }
-    return jsToEzjs
+
+    function javascriptToEzjs(source, universe) {
+      var lines = source.split("\n")
+
+      var out = undefined
+
+      log("\nOriginal JavaScript:\n"+source+"\n")
+
+      var tree = anExpression.tree()
+      if (universe) {
+        tree.logTo(universe)
+      }
+
+      lines.forEach(function(line) {
+        var newExpr = toEzjs.call(tree, line)
+
+        if (newExpr && !out) {
+          out = newExpr
+        }
+      })
+
+      log("\nFinished expression:\n"+JSON.stringify(out, null, 2)+"\n")
+
+      javascriptToEzjs.loud = false
+
+      return tree
+    }
+
+    return javascriptToEzjs
   }
 )
