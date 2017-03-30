@@ -40,7 +40,7 @@ library.using(
     var universe = tellTheUniverse.called("demo-module").withNames({anExpression: "an-expression"})
 
     javascriptToEzjs.loud = true
-    
+
     var tree = javascriptToEzjs(buildAHouse.toString(), universe)
 
     var id = tree.id
@@ -58,8 +58,11 @@ library.using(
       universe.playItBack()
 
       console.log("now tree "+id+" is:")
-      _wtf(anExpression.getTree(id))
 
+      tree = anExpression.getTree(id)
+      _wtf(tree)
+
+      console.log("\n#########\nReconstructed source:###########\n"+anExpression.toJavascript(tree.root()))
     }, 2000)
 
 

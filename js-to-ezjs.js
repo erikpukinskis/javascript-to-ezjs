@@ -87,7 +87,7 @@ module.exports = library.export(
 
         expression.argumentNames = argumentNames(functionLiteralStart[2])
 
-        tree.addExpression(expression)
+        add(expression, tree)
 
         expression.body = []
 
@@ -122,7 +122,7 @@ module.exports = library.export(
 
         var expression = pop(stack, "function call")
 
-        tree.addExpressionAt(expression, expression.i)
+        addAt(expression.i, expression, tree)
 
         log("  *  call end!", source)
 
@@ -135,7 +135,7 @@ module.exports = library.export(
 
         addToParent(stack, literal)
 
-        tree.addExpression(literal)
+        add(literal, tree)
 
         log("  *  string literal!", source)
       } else if (objectLiteral) {
@@ -146,6 +146,16 @@ module.exports = library.export(
         }
 
         var literal = anExpression.objectLiteral(obj)
+
+        var i = tree.reservePosition()
+
+        for(var key in literal.valuesByKey) {
+          var value = literal.valuesByKey[key]
+          add(value, tree)
+        }
+
+        addAt(i, literal, tree)
+
         addToParent(stack, literal)
         log("  *  object literal!", source)
 
@@ -163,7 +173,7 @@ module.exports = library.export(
       } else if (arrayLiteralEnd) {
         toEzjs.call(tree, arrayLiteralEnd[1])
         var arr = pop(stack, "array literal")
-        tree.addExpressionAt(arr, arr.i)
+        addAt(arr.i, arr, tree)
         log("  *  array end!", source)
       } else {
 
@@ -210,6 +220,8 @@ module.exports = library.export(
           variableName: source,
         }
 
+        add(ref, tree)
+
         addToParent(stack, ref)
 
       } else {
@@ -217,6 +229,21 @@ module.exports = library.export(
       }
 
 
+    }
+
+    function add(expression, tree) {
+      addAt(tree.reservePosition(), expression, tree)
+    }
+
+    function addAt(i, expression, tree) {
+      tree.addExpressionAt(expression, i)
+
+      var parent = expression.parentToAdd
+      delete expression.parentToAdd
+
+      if (parent) {
+        tree.addExpressionAt(parent, i)
+      }
     }
 
     function pop(stack, kind) {
@@ -252,10 +279,12 @@ module.exports = library.export(
           break;
         case "return statement":
           parent.expression = item
+          item.parentToAdd = parent
           pop(stack, "return statement")
           break;
         case "variable assignment":
           parent.expression = item
+          item.parentToAdd = parent
           pop(stack, "variable assignment")
           break;
         default:
@@ -314,8 +343,6 @@ module.exports = library.export(
     function javascriptToEzjs(source, universe) {
       var lines = source.split("\n")
 
-      var out = undefined
-
       log("\nOriginal JavaScript:\n"+source+"\n")
 
       var tree = anExpression.tree()
@@ -324,19 +351,31 @@ module.exports = library.export(
       }
 
       lines.forEach(function(line) {
-        var newExpr = toEzjs.call(tree, line)
-
-        if (newExpr && !out) {
-          out = newExpr
-        }
+        toEzjs.call(tree, line)
       })
 
-      log("\nFinished expression:\n"+JSON.stringify(out, null, 2)+"\n")
+      log("\nFinished expression:\n"+JSON.stringify(tree.root(), withCircularDependecies, 2)+"\n")
+      cache = []
 
       javascriptToEzjs.loud = false
 
       return tree
     }
+
+
+    var cache = []
+    function withCircularDependecies(key, value) {
+      if (typeof value === 'object' && value !== null) {
+          if (cache.indexOf(value) !== -1) {
+              // Circular reference found, discard key
+              return "<<< CIRCLE >>>"
+          }
+          // Store value in our collection
+          cache.push(value);
+      }
+      return value;
+    }
+
 
     return javascriptToEzjs
   }
