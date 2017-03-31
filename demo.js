@@ -62,7 +62,9 @@ library.using(
       tree = anExpression.getTree(id)
       _wtf(tree)
 
-      console.log("\n#########\nReconstructed source:###########\n"+anExpression.toJavascript(tree.root()))
+      console.log("\n===\nORIGINAL JAVASCRIPT\n"+buildAHouse.toString()+"\n===\n")
+        
+      console.log("\n===\nRECONSTRUCTURED SOURCE\n"+anExpression.toJavascript(tree.root())+"\n===\n")
     }, 2000)
 
 

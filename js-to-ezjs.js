@@ -52,7 +52,7 @@ module.exports = library.export(
           kind: "return statement",
           id: anExpression.id(),
         }
-        addToParent(stack, expression)
+        addToParent(stack, expression, tree)
         stack.push(expression)
         log("  *  return statement!", source)
         toEzjs.call(tree, returnStatement[1])
@@ -62,10 +62,11 @@ module.exports = library.export(
           kind: "variable assignment",
           id: anExpression.id(),
           variableName: variableAssignment[1],
+          isDeclaration: true,
           i: tree.reservePosition(),
         }
 
-        addToParent(stack, expression)
+        addToParent(stack, expression, tree)
 
         stack.push(expression)
         log("  *  assignment!", source)
@@ -91,7 +92,7 @@ module.exports = library.export(
 
         expression.body = []
 
-        addToParent(stack, expression)
+        addToParent(stack, expression, tree)
         stack.push(expression)
 
         return expression
@@ -112,7 +113,7 @@ module.exports = library.export(
           i: tree.reservePosition(),
         }
 
-        addToParent(stack, call)
+        addToParent(stack, call, tree)
         stack.push(call)
 
         toEzjs.call(tree, functionCallStart[2])
@@ -133,7 +134,7 @@ module.exports = library.export(
           string: eval(stringLiteral[1]),
         }
 
-        addToParent(stack, literal)
+        addToParent(stack, literal, tree)
 
         add(literal, tree)
 
@@ -156,7 +157,7 @@ module.exports = library.export(
 
         addAt(i, literal, tree)
 
-        addToParent(stack, literal)
+        addToParent(stack, literal, tree)
         log("  *  object literal!", source)
 
       } else if (arrayLiteralStart) {
@@ -167,7 +168,7 @@ module.exports = library.export(
           items: [],
           i: tree.reservePosition()
         }
-        addToParent(stack, arr)
+        addToParent(stack, arr, tree)
 
         stack.push(arr)
       } else if (arrayLiteralEnd) {
@@ -209,7 +210,7 @@ module.exports = library.export(
           number: eval(source),
         }
 
-        addToParent(stack, literal)
+        addToParent(stack, literal, tree)
 
       } else if (reference) {
         log("  *  reference!", source)
@@ -222,7 +223,7 @@ module.exports = library.export(
 
         add(ref, tree)
 
-        addToParent(stack, ref)
+        addToParent(stack, ref, tree)
 
       } else {
         log(" !!! don't understand:", source)
@@ -238,12 +239,20 @@ module.exports = library.export(
     function addAt(i, expression, tree) {
       tree.addExpressionAt(expression, i)
 
+      var functionLiteral = expression.lineIn
+
+      console.log("ADDING "+expression.kind+" literal is "+!!functionLiteral)
+
+      if (functionLiteral) {
+        tree.addLine(expression, functionLiteral)
+      }
+
       var parent = expression.parentToAdd
-      delete expression.parentToAdd
 
       if (parent) {
-        tree.addExpressionAt(parent, i)
+        addAt(i, parent, tree)
       }
+
     }
 
     function pop(stack, kind) {
@@ -256,7 +265,7 @@ module.exports = library.export(
       return top
     }
 
-    function addToParent(stack, item) {
+    function addToParent(stack, item, tree) {
       var parent = stack[stack.length-1]
 
       if (stack.length < 1) {
@@ -269,6 +278,8 @@ module.exports = library.export(
       switch (parent.kind) {
         case "function literal":
           parent.body.push(item)
+          item.lineIn = parent
+          console.log("set lineIn on "+item.kind)
           break;
         case "function call":
           message += " as argument"
@@ -368,7 +379,7 @@ module.exports = library.export(
       if (typeof value === 'object' && value !== null) {
           if (cache.indexOf(value) !== -1) {
               // Circular reference found, discard key
-              return "<<< CIRCLE >>>"
+              return "<<< CIRCULAR REF: "+value.id+" >>>"
           }
           // Store value in our collection
           cache.push(value);
