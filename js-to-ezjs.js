@@ -253,6 +253,9 @@ module.exports = library.export(
         addAt(i, parent, tree)
       }
 
+      delete expression.parentToAdd
+      delete expression.lineIn
+      delete expression.i
     }
 
     function pop(stack, kind) {
