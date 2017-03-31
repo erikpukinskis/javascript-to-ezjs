@@ -324,7 +324,7 @@ module.exports = library.export(
         case "return statement":
           return "returning "+what(it.expression)
         case "object literal":
-          return "object with keys "+JSON.stringify(Object.keys(it.valuesByKey))
+          return "object with keys "+JSON.stringify(it.keys)
         default:
           throw new Error("Don't know what "+it.kind+" is")
       }
