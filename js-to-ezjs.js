@@ -241,8 +241,6 @@ module.exports = library.export(
 
       var functionLiteral = expression.lineIn
 
-      console.log("ADDING "+expression.kind+" literal is "+!!functionLiteral)
-
       if (functionLiteral) {
         tree.addLine(expression, functionLiteral)
       }
@@ -282,7 +280,6 @@ module.exports = library.export(
         case "function literal":
           parent.body.push(item)
           item.lineIn = parent
-          console.log("set lineIn on "+item.kind)
           break;
         case "function call":
           message += " as argument"
