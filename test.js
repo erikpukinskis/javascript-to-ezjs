@@ -1,6 +1,5 @@
 var runTest = require("run-test")(require)
 
-
 runTest(
   "function calls can have variable references, numbers, booleans inline",
   ["./"],

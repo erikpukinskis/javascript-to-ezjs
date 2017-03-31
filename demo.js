@@ -39,14 +39,16 @@ library.using(
 
     var universe = tellTheUniverse.called("demo-module").withNames({anExpression: "an-expression"})
 
-    javascriptToEzjs.loud = true
+    // javascriptToEzjs.loud = true
 
     var tree = javascriptToEzjs(buildAHouse.toString(), universe)
 
     var id = tree.id
 
-    console.log("initial tree:")
-    _wtf(anExpression.getTree(id))
+    console.log("literal has "+tree.root().body.length+" lines")
+
+    console.log("initial tree", id, ":")
+    _wtf()
 
     setTimeout(function() {
       anExpression.forgetTrees()

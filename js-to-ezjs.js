@@ -88,11 +88,12 @@ module.exports = library.export(
 
         expression.argumentNames = argumentNames(functionLiteralStart[2])
 
-        add(expression, tree)
-
         expression.body = []
 
         addToParent(stack, expression, tree)
+
+        add(expression, tree)
+
         stack.push(expression)
 
         return expression
@@ -155,9 +156,10 @@ module.exports = library.export(
           add(value, tree)
         }
 
+        addToParent(stack, literal, tree)
+
         addAt(i, literal, tree)
 
-        addToParent(stack, literal, tree)
         log("  *  object literal!", source)
 
       } else if (arrayLiteralStart) {
@@ -221,9 +223,9 @@ module.exports = library.export(
           variableName: source,
         }
 
-        add(ref, tree)
-
         addToParent(stack, ref, tree)
+
+        add(ref, tree)
 
       } else {
         log(" !!! don't understand:", source)
@@ -278,7 +280,6 @@ module.exports = library.export(
 
       switch (parent.kind) {
         case "function literal":
-          parent.body.push(item)
           item.lineIn = parent
           break;
         case "function call":
