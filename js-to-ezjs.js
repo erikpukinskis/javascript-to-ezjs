@@ -151,9 +151,9 @@ module.exports = library.export(
 
         var i = tree.reservePosition()
 
-        for(var key in literal.valuesByKey) {
-          var value = literal.valuesByKey[key]
-          add(value, tree)
+        for(var i=0; i<literal.keys.length; i++) {
+          var valueExpression = literal.values[i]
+          add(valueExpression, tree)
         }
 
         addToParent(stack, literal, tree)
