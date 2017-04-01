@@ -1,6 +1,31 @@
 var runTest = require("run-test")(require)
 
 runTest(
+  "rebuild tree from log",
+  ["./", "tell-the-universe", "an-expression"],
+  function(expect, done, jsToEz, tellTheUniverse, anExpression) {
+
+    function bar() {}
+
+    var universe = tellTheUniverse.called("test").withNames({anExpression: "an-expression"})
+
+    var tree = jsToEz(bar.toString(), universe)
+
+    anExpression.forgetTrees()
+
+    expect(anExpression.getTree(tree.id)).to.be.undefined
+
+    universe.playItBack()
+
+    var reincarnated = anExpression.getTree(tree.id)
+
+    expect(reincarnated.expressionIds.length).to.equal(1)
+
+    done()
+  }
+)
+
+runTest(
   "function calls can have variable references, numbers, booleans inline",
   ["./"],
   function(expect, done, jsToEz) {
