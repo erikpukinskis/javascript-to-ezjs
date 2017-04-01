@@ -14,7 +14,10 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString()).root()
+    var tree = jsToEz(foo.toString())
+    var expr = tree.root()
+
+    expect(tree.expressionIds.length).to.equal(7)
 
     var bless = expr.body[0]
     expect(bless.arguments[0].kind).to.equal("variable reference")
@@ -104,7 +107,8 @@ runTest(
 
     expect(obj.kind).to.equal("object literal")
 
-    expect(obj.valuesByKey.src.string).to.equal("/housing-bond/tiny.jpg")
+    expect(obj.values[0].string).to.equal("/housing-bond/tiny.jpg")
+    expect(obj.keys[0]).to.equal("src")
 
     done()
   }

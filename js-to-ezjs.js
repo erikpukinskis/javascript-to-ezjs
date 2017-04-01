@@ -214,6 +214,8 @@ module.exports = library.export(
 
         addToParent(stack, literal, tree)
 
+        add(literal, tree)
+
       } else if (reference) {
         log("  *  reference!", source)
 
