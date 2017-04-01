@@ -241,12 +241,13 @@ module.exports = library.export(
     }
 
     function addAt(i, expression, tree) {
-      tree.addExpressionAt(expression, i)
 
       var functionLiteral = expression.lineIn
 
       if (functionLiteral) {
-        tree.addLine(expression, functionLiteral)
+        tree.addLine(expression, i, functionLiteral)
+      } else {
+        tree.addExpressionAt(expression, i)
       }
 
       var parent = expression.parentToAdd
