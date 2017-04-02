@@ -253,7 +253,7 @@ module.exports = library.export(
       var parent = expression.parentToAdd
 
       if (parent) {
-        addAt(i, parent, tree)
+        addAt(parent.i, parent, tree)
       }
 
       delete expression.parentToAdd
