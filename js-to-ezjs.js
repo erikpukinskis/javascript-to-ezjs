@@ -355,16 +355,11 @@ module.exports = library.export(
       return names
     }
 
-    function javascriptToEzjs(source, universe) {
+    function javascriptToEzjs(source, tree) {
       var lines = source.split("\n")
 
       log("\nOriginal JavaScript:\n"+source+"\n")
-
-      var tree = anExpression.tree()
-      if (universe) {
-        tree.logTo(universe)
-      }
-
+      
       lines.forEach(function(line) {
         toEzjs.call(tree, line)
       })
