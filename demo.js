@@ -39,9 +39,13 @@ library.using(
 
     var universe = tellTheUniverse.called("demo-module").withNames({anExpression: "an-expression"})
 
+    tree = anExpression.tree()
+    universe("anExpression.tree", tree.id)
+    tree.logTo(universe)
+
     // javascriptToEzjs.loud = true
 
-    var tree = javascriptToEzjs(buildAHouse.toString(), universe)
+    javascriptToEzjs(buildAHouse.toString(), tree)
 
     var id = tree.id
 
