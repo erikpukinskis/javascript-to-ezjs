@@ -359,7 +359,7 @@ module.exports = library.export(
       var lines = source.split("\n")
 
       log("\nOriginal JavaScript:\n"+source+"\n")
-      
+
       lines.forEach(function(line) {
         toEzjs.call(tree, line)
       })
@@ -368,8 +368,6 @@ module.exports = library.export(
       cache = []
 
       javascriptToEzjs.loud = false
-
-      return tree
     }
 
 
