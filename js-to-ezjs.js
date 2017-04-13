@@ -360,6 +360,10 @@ module.exports = library.export(
 
       log("\nOriginal JavaScript:\n"+source+"\n")
 
+      if (!tree) {
+        tree = anExpression.tree()
+      }
+
       lines.forEach(function(line) {
         toEzjs.call(tree, line)
       })
@@ -368,6 +372,8 @@ module.exports = library.export(
       cache = []
 
       javascriptToEzjs.loud = false
+
+      return tree
     }
 
 

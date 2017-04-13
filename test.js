@@ -9,7 +9,10 @@ runTest(
 
     var universe = tellTheUniverse.called("test").withNames({anExpression: "an-expression"})
 
-    var tree = jsToEz(bar.toString(), universe)
+    var tree = anExpression.tree()
+    tree.logTo(universe)
+    universe("anExpression.tree", tree.id)
+    jsToEz(bar.toString(), tree)
 
     anExpression.forgetTrees()
 
