@@ -1,5 +1,33 @@
 var runTest = require("run-test")(require)
 
+
+// runTest.only("parses log lines")
+
+runTest(
+  "parses log lines",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    function foo() {
+      someFunc("arg", "two", 3)
+    }
+
+    // jsToEz.loud = true
+
+    var tree = jsToEz(foo.toString())
+    var expr = tree.root()
+
+    expect(expr.body[0].arguments[0].string).to.equal("arg")
+
+    expect(expr.body[0].arguments[1].string).to.equal("two")
+
+    expect(expr.body[0].arguments[2].number).to.equal(3)
+
+    done()
+  }
+)
+
+
 runTest(
   "rebuild tree from log",
   ["./", "tell-the-universe", "an-expression"],
@@ -142,6 +170,7 @@ runTest(
   }
 )
 
+
 runTest(
   "understand a real function",
   ["./"],
@@ -154,7 +183,10 @@ runTest(
         var letter = element([
           element(
             "img.hero",
-            {"src": "/housing-bond/tiny.jpg"}
+            {"src": "/housing-bond/tiny.jpg"},
+            function() {
+              true
+            }
           ),
           element(
             "Dear friends,"

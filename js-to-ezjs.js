@@ -52,7 +52,7 @@ module.exports = library.export(
           kind: "return statement",
           id: anExpression.id(),
         }
-        addToParent(stack, expression, tree)
+        addToParent(stack, expression)
         stack.push(expression)
         log("  *  return statement!", source)
         toEzjs.call(tree, returnStatement[1])
@@ -63,10 +63,10 @@ module.exports = library.export(
           id: anExpression.id(),
           variableName: variableAssignment[1],
           isDeclaration: true,
-          i: tree.reservePosition(),
+          index: tree.reservePosition(),
         }
 
-        addToParent(stack, expression, tree)
+        addToParent(stack, expression)
 
         stack.push(expression)
         log("  *  assignment!", source)
@@ -90,7 +90,7 @@ module.exports = library.export(
 
         expression.body = []
 
-        addToParent(stack, expression, tree)
+        addToParent(stack, expression)
 
         add(expression, tree)
 
@@ -111,10 +111,10 @@ module.exports = library.export(
           id: anExpression.id(),
           functionName: functionCallStart[1],
           arguments: [],
-          i: tree.reservePosition(),
+          index: tree.reservePosition(),
         }
 
-        addToParent(stack, call, tree)
+        addToParent(stack, call)
         stack.push(call)
 
         toEzjs.call(tree, functionCallStart[2])
@@ -124,7 +124,7 @@ module.exports = library.export(
 
         var expression = pop(stack, "function call")
 
-        addAt(expression.i, expression, tree)
+        addAt(expression.index, expression, tree)
 
         log("  *  call end!", source)
 
@@ -135,7 +135,7 @@ module.exports = library.export(
           string: eval(stringLiteral[1]),
         }
 
-        addToParent(stack, literal, tree)
+        addToParent(stack, literal)
 
         add(literal, tree)
 
@@ -149,34 +149,34 @@ module.exports = library.export(
 
         var literal = anExpression.objectLiteral(obj)
 
-        var i = tree.reservePosition()
+        var index = tree.reservePosition()
 
         for(var i=0; i<literal.keys.length; i++) {
           var valueExpression = literal.values[i]
           add(valueExpression, tree)
         }
 
-        addToParent(stack, literal, tree)
+        addToParent(stack, literal)
 
-        addAt(i, literal, tree)
+        addAt(index, literal, tree)
 
         log("  *  object literal!", source)
 
       } else if (arrayLiteralStart) {
         log("  *  array literal!", source)
         var arr = {
-          kind: "array literal",
+          kind: "array literal", 
           id: anExpression.id(),
           items: [],
-          i: tree.reservePosition()
+          index: tree.reservePosition()
         }
-        addToParent(stack, arr, tree)
+        addToParent(stack, arr)
 
         stack.push(arr)
       } else if (arrayLiteralEnd) {
         toEzjs.call(tree, arrayLiteralEnd[1])
         var arr = pop(stack, "array literal")
-        addAt(arr.i, arr, tree)
+        addAt(arr.index, arr, tree)
         log("  *  array end!", source)
       } else {
 
@@ -212,7 +212,7 @@ module.exports = library.export(
           number: eval(source),
         }
 
-        addToParent(stack, literal, tree)
+        addToParent(stack, literal)
 
         add(literal, tree)
 
@@ -225,7 +225,7 @@ module.exports = library.export(
           variableName: source,
         }
 
-        addToParent(stack, ref, tree)
+        addToParent(stack, ref)
 
         add(ref, tree)
 
@@ -240,25 +240,24 @@ module.exports = library.export(
       addAt(tree.reservePosition(), expression, tree)
     }
 
-    function addAt(i, expression, tree) {
+    function addAt(index, expression, tree) {
 
       var functionLiteral = expression.lineIn
-
-      if (functionLiteral) {
-        tree.addLine(expression, i, functionLiteral)
-      } else {
-        tree.addExpressionAt(expression, i)
-      }
-
       var parent = expression.parentToAdd
-
-      if (parent) {
-        addAt(parent.i, parent, tree)
-      }
 
       delete expression.parentToAdd
       delete expression.lineIn
-      delete expression.i
+      delete expression.index
+
+      if (functionLiteral) {
+        tree.addLine(expression, index, functionLiteral)
+      } else {
+        tree.addExpressionAt(expression, index)
+      }
+
+      if (parent) {
+        addAt(parent.index, parent, tree)
+      }
     }
 
     function pop(stack, kind) {
@@ -271,7 +270,7 @@ module.exports = library.export(
       return top
     }
 
-    function addToParent(stack, item, tree) {
+    function addToParent(stack, item) {
       var parent = stack[stack.length-1]
 
       if (stack.length < 1) {
