@@ -2,7 +2,7 @@ var runTest = require("run-test")(require)
 
 
 // runTest.only("parses log lines")
-runTest.only("rebuild tree from log")
+// runTest.only("rebuild tree from log")
 
 runTest(
   "parses log lines",
@@ -87,16 +87,20 @@ runTest(
     // jsToEz.loud = true
 
     var tree = jsToEz(foo.toString())
-    var expr = tree.root()
+    var root = tree.rootId()
 
     expect(tree.expressionIds.length).to.equal(7)
 
-    var bless = expr.body[0]
-    expect(bless.arguments[0].kind).to.equal("variable reference")
+    var blessId = tree.getListItem("body", root, 0)
+    var thisId = tree.getListItem("arguments", blessId, 0)
+
+    expect(tree.getAttribute("kind", thisId)).to.equal("variable reference")
   
-    var upTo = expr.body[1]
-    expect(upTo.arguments[0].kind).to.equal("number literal")
-    expect(upTo.arguments[1].kind).to.equal("variable reference")
+    var upTo = tree.getListItem("body", root, 1)
+    var oneId = tree.getListItem("arguments", upTo, 0)
+    var houseId = tree.getListItem("arguments", upTo, 1)
+    expect(tree.getAttribute("kind", oneId)).to.equal("number literal")
+    expect(tree.getAttribute("kind", houseId)).to.equal("variable reference")
 
     done()
   }
