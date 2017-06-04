@@ -56,7 +56,6 @@ module.exports = library.export(
         stack.push(expression)
         log("  *  return statement!", source)
         toEzjs.call(tree, returnStatement[1])
-
       } else if (variableAssignment) {
         expression = {
           kind: "variable assignment",
@@ -78,6 +77,7 @@ module.exports = library.export(
         expression = {
           kind: "function literal",
           id: anExpression.id(),
+          index: tree.reservePosition(),
         }
 
         log("  *  function literal start!", source)
@@ -91,8 +91,6 @@ module.exports = library.export(
         expression.body = []
 
         addToParent(stack, expression)
-
-        add(expression, tree)
 
         stack.push(expression)
 
@@ -243,20 +241,24 @@ module.exports = library.export(
     function addAt(index, expression, tree) {
 
       var functionLiteral = expression.lineIn
-      var parent = expression.parentToAdd
+      var parent = expression.parentToAdd || functionLiteral
 
       delete expression.parentToAdd
       delete expression.lineIn
       delete expression.index
 
       if (functionLiteral) {
-        tree.addLine(expression, index, functionLiteral)
+        log("  + Adding "+expression.kind+" ("+expression.id+") line at "+index+" to "+functionLiteral.id)
+        tree.addLine(functionLiteral.id, index, expression)
       } else {
-        tree.addExpressionAt(expression, index)
+        log("  + Adding "+expression.kind+" ("+expression.id+") at "+index)
+        tree.addExpressionAt(index, expression)
       }
 
-      if (parent) {
+      if (parent && typeof parent.index != "undefined") {
+        log("  + PARENT "+parent.id)
         addAt(parent.index, parent, tree)
+        delete parent.index
       }
     }
 
@@ -278,7 +280,7 @@ module.exports = library.export(
         return
       }
 
-      var message = " --> adding "+what(item)+" to "+what(parent)
+      var message = " --> adding "+what(item)+" ("+item.id+") to "+what(parent)
 
       switch (parent.kind) {
         case "function literal":
@@ -286,7 +288,7 @@ module.exports = library.export(
           break;
         case "function call":
           message += " as argument"
-          parent.arguments.push(item)
+          parent.arguments.push(item.id)
           break;
         case "array literal":
           parent.items.push(item)
@@ -367,7 +369,7 @@ module.exports = library.export(
         toEzjs.call(tree, line)
       })
 
-      log("\nFinished expression:\n"+JSON.stringify(tree.root(), withCircularDependecies, 2)+"\n")
+      log("\nFinished expression. Root is "+tree.rootId()+"\n")
       cache = []
 
       javascriptToEzjs.loud = false

@@ -2,6 +2,7 @@ var runTest = require("run-test")(require)
 
 
 // runTest.only("parses log lines")
+runTest.only("rebuild tree from log")
 
 runTest(
   "parses log lines",
@@ -15,13 +16,26 @@ runTest(
     // jsToEz.loud = true
 
     var tree = jsToEz(foo.toString())
-    var expr = tree.root()
 
-    expect(expr.body[0].arguments[0].string).to.equal("arg")
+    var funcId = tree.rootId()
 
-    expect(expr.body[0].arguments[1].string).to.equal("two")
+    var callId = tree.getListItem("body", funcId, 0)
 
-    expect(expr.body[0].arguments[2].number).to.equal(3)
+    expect(callId.length).to.be.above(3)
+    done.ish("got something from the body")
+
+    var firstArg = tree.getListItem("arguments", callId, 0)
+    expect(firstArg.length).to.be.above(3)
+    done.ish("got an argument")
+
+    var secondArg = tree.getListItem("arguments", callId, 1)
+    var thirdArg = tree.getListItem("arguments", callId, 2)
+    expect(tree.getAttribute("string", firstArg)).to.equal("arg")
+    done.ish("first arg is correct")
+
+    expect(tree.getAttribute("string", secondArg)).to.equal("two")
+
+    expect(tree.getAttribute("number", thirdArg)).to.equal(3)
 
     done()
   }
