@@ -5,7 +5,7 @@ module.exports = library.export(
   ["an-expression"],
   function(anExpression) {
 
-    var stack = []
+    var stack
 
     function log() {
       if (!javascriptToEzjs.loud) { return }
@@ -357,6 +357,7 @@ module.exports = library.export(
     }
 
     function javascriptToEzjs(source, tree) {
+      stack = []
       var lines = source.split("\n")
 
       log("\nOriginal JavaScript:\n"+source+"\n")
@@ -369,11 +370,24 @@ module.exports = library.export(
         toEzjs.call(tree, line)
       })
 
+      if (stack.length) {
+        var root = stack.pop()
+        if (stack.length) {
+          throw new Error("extra stuff on the stack?")
+        } else if (typeof root.index == "undefined") {
+          throw new Error("something left on the stack with no index?")
+        } else if (root.index != 0) {
+          throw new Error("left something on the stack other than the root?")
+        } else {
+          addAt(root.index, root, tree)
+        }
+      }
+
       log("\nFinished expression. Root is "+tree.rootId()+"\n")
       cache = []
 
       javascriptToEzjs.loud = false
-
+      stack = undefined
       return tree
     }
 

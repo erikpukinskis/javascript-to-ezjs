@@ -51,6 +51,8 @@ runTest(
 
     var universe = tellTheUniverse.called("test").withNames({anExpression: "an-expression"})
 
+    jsToEz.loud = true
+
     var tree = anExpression.tree()
     tree.logTo(universe)
     universe("anExpression.tree", tree.id)
