@@ -106,7 +106,6 @@ runTest(
   }
 )
 
-
 runTest(
   "Array literal arguments need to have items on new lines",
   ["./"],
@@ -120,23 +119,23 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString()).root()
+    var tree = jsToEz(foo.toString())
+    var root = tree.rootId()
 
-    expect(expr.kind).to.equal("function literal")
+    expect(tree.getAttribute("kind", root)).to.equal("function literal")
 
-    var tootCall = expr.body[0]
-    expect(tootCall.kind).to.equal("function call")
+    var tootCall = tree.getListItem("body", root, 0)
+    expect(tree.getAttribute("kind", tootCall)).to.equal("function call")
 
-    var array = tootCall.arguments[0]
-    expect(array.kind).to.equal("array literal")
+    var array = tree.getListItem("arguments", tootCall, 0)
+    expect(tree.getAttribute("kind", array)).to.equal("array literal")
 
-    var frootCall = expr.body[1]
-    expect(frootCall.kind).to.equal("function call")
+    var frootCall = tree.getListItem("body", root, 1)
+    expect(tree.getAttribute("kind", frootCall)).to.equal("function call")
 
     done()
   }
 )
-
 
 runTest(
   "function literals args",
@@ -153,12 +152,15 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString()).root()
+    var tree = jsToEz(foo.toString())
+    var root = tree.rootId()
 
-    var fun = expr.body[0]
-    expect(fun.arguments[0].kind).to.equal("function literal")
+    var fun = tree.getListItem("body", root, 0)
+    var firstArg = tree.getListItem("arguments", fun, 0)
+    expect(tree.getAttribute("kind", firstArg)).to.equal("function literal")
 
-    expect(fun.arguments[0].body[0].functionName).to.equal("boo")
+    var boo = tree.getListItem("body", firstArg, 0)
+    expect(tree.getAttribute("functionName", boo)).to.equal("boo")
 
     done()
   }
@@ -175,16 +177,23 @@ runTest(
 
     // jsToEz.loud = true
 
-    var expr = jsToEz(foo.toString()).root()
+    var tree = jsToEz(foo.toString())
+    var foo = tree.rootId()
+    var firstLine = tree.getListItem("body", foo, 0)
 
-    expect(expr.body[0].kind).to.equal("return statement")
+    expect(tree.getAttribute("kind", firstLine)).to.equal("return statement")
 
-    var obj = expr.body[0].expression
+    var obj = tree.getAttribute("expression", firstLine)
 
-    expect(obj.kind).to.equal("object literal")
+    expect(tree.getAttribute("kind", obj)).to.equal("object literal")
 
-    expect(obj.values[0].string).to.equal("/housing-bond/tiny.jpg")
-    expect(obj.keys[0]).to.equal("src")
+    var pairId = tree.getListItem("pairIds", obj, 0)
+    var value = tree.getAttribute("valueId", pairId)
+    var key = tree.getAttribute("key", pairId)
+
+    expect(tree.getAttribute("string", value)).to.equal("/housing-bond/tiny.jpg")
+
+    expect(key).to.equal("src")
 
     done()
   }

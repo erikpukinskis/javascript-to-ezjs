@@ -51,6 +51,7 @@ module.exports = library.export(
         expression = {
           kind: "return statement",
           id: anExpression.id(),
+          index: tree.reservePosition(),
         }
         addToParent(stack, expression)
         stack.push(expression)
@@ -140,23 +141,36 @@ module.exports = library.export(
         log("  *  string literal!", source)
       } else if (objectLiteral) {
         try {
-          var obj = JSON.parse(source)
+          var object = JSON.parse(source)
         } catch (e) {
           console.log("The source code "+source+" looked like an object, but it failed to parse. Objects need to be valid JSON")
         }
 
-        var literal = anExpression.objectLiteral(obj)
-
-        var index = tree.reservePosition()
-
-        for(var i=0; i<literal.keys.length; i++) {
-          var valueExpression = literal.values[i]
-          add(valueExpression, tree)
-        }
+        var literal = anExpression.objectLiteral({})
 
         addToParent(stack, literal)
+        add(literal, tree)
 
-        addAt(index, literal, tree)
+        for(var key in object) {
+          var value = object[key]
+          switch(typeof value)  {
+          case "string":
+            var valueExpression = anExpression.stringLiteral(value)
+            break;
+          case "number":
+            var valueExpression = anExpression.numberLiteral(value)
+            break;
+          case "boolean":
+            var valueExpression = anExpression.boolean(value)
+            break;
+          default:
+            throw new Error("Objects can only have string, number, or boolean values")
+          }
+
+          add(valueExpression, tree)
+
+          tree.addKeyPair(literal.id, key, valueExpression.id)
+        }
 
         log("  *  object literal!", source)
 
@@ -291,15 +305,15 @@ module.exports = library.export(
           parent.arguments.push(item.id)
           break;
         case "array literal":
-          parent.items.push(item)
+          parent.items.push(item.id)
           break;
         case "return statement":
-          parent.expression = item
+          parent.expression = item.id
           item.parentToAdd = parent
           pop(stack, "return statement")
           break;
         case "variable assignment":
-          parent.expression = item
+          parent.expression = item.id
           item.parentToAdd = parent
           pop(stack, "variable assignment")
           break;
