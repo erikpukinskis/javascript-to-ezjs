@@ -143,7 +143,7 @@ module.exports = library.export(
         try {
           var object = JSON.parse(source)
         } catch (e) {
-          console.log("The source code "+source+" looked like an object, but it failed to parse. Objects need to be valid JSON")
+          throw new Error("The source code "+source+" looked like an object, but it failed to parse. Objects need to be valid JSON")
         }
 
         var literal = anExpression.objectLiteral({})
