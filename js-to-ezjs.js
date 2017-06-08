@@ -34,7 +34,7 @@ module.exports = library.export(
       var arrayLiteralStart = !stringLiteral && source.match(/^\[$/)
       var arrayLiteralEnd = !arrayLiteralStart && source.match(/^(.*)\]$/)
 
-      var objectLiteral = !arrayLiteralEnd && source.match(/^\{[^:]+:/)
+      var objectLiteral = !arrayLiteralEnd && source.match(/^(\{[^:]+:.*\})([^{]*)$/)
 
       var comment = !objectLiteral && source.match(/^\/\//)
 
@@ -140,6 +140,10 @@ module.exports = library.export(
 
         log("  *  string literal!", source)
       } else if (objectLiteral) {
+
+        var source = objectLiteral[1]
+        var extra = objectLiteral[2].trim()
+
         try {
           var object = JSON.parse(source)
         } catch (e) {
@@ -173,6 +177,10 @@ module.exports = library.export(
         }
 
         log("  *  object literal!", source)
+
+        if (extra) {
+          toEzjs.call(tree, extra)
+        }
 
       } else if (arrayLiteralStart) {
         log("  *  array literal!", source)

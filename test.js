@@ -1,9 +1,6 @@
 var runTest = require("run-test")(require)
 
 
-// runTest.only("parses log lines")
-// runTest.only("rebuild tree from log")
-
 runTest(
   "parses log lines",
   ["./"],
@@ -51,7 +48,7 @@ runTest(
 
     var universe = tellTheUniverse.called("test").withNames({anExpression: "an-expression"})
 
-    jsToEz.loud = true
+    // jsToEz.loud = true
 
     var tree = anExpression.tree()
     tree.logTo(universe)
