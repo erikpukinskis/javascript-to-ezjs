@@ -1,5 +1,24 @@
 var runTest = require("run-test")(require)
 
+// runTest.only("function literals as arguments")
+
+runTest(
+  "function literals as arguments",
+  ["./", "fs"],
+  function(expect, done, jsToEz, fs) {
+
+var source = (function() {
+blah(
+  function(foo) {
+    return true })
+}).toString().split("\n").slice(1,4).join("\n")
+
+    jsToEz.loud = true
+
+    var tree = jsToEz(source)
+    done()
+  }
+)
 
 runTest(
   "parses log lines",

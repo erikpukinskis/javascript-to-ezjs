@@ -26,7 +26,9 @@ module.exports = library.export(
       var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
       var functionLiteralEnd = !functionLiteralStart && source.match(/^\}$/)
 
-      var functionCallStart = !functionLiteralEnd && source.match(/^([^ ,"'(){}]+)[(](.*)$/)
+      var booleanLiteral = !functionLiteralEnd && source.match(/^(true|false)($|[^\w].*$)/i)
+
+      var functionCallStart = !booleanLiteral && source.match(/^([^ ,"'(){}]+)[(](.*)$/)
       var functionCallEnd = !functionCallStart && source.match(/^(.*)\)$/)
 
       var stringLiteral = !functionCallEnd && source.match(/^(".*"),?$/)
@@ -182,6 +184,17 @@ module.exports = library.export(
           toEzjs.call(tree, extra)
         }
 
+      } else if (booleanLiteral) {
+        if (booleanLiteral[1] == "true") {
+          var boo = anExpression.true()
+        } else {
+          var boo = anExpression.false()
+        }
+        addToParent(stack, boo)
+        var extra = booleanLiteral[2]
+        if (extra) {
+          toEzjs.call(tree, extra)
+        }
       } else if (arrayLiteralStart) {
         log("  *  array literal!", source)
         var arr = {
@@ -352,6 +365,8 @@ module.exports = library.export(
           return "returning "+what(it.expression)
         case "object literal":
           return "object with keys "+JSON.stringify(it.keys)
+        case "boolean":
+          return "boolean "+it.value.toString()
         default:
           throw new Error("Don't know what "+it.kind+" is")
       }
