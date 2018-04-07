@@ -60,23 +60,24 @@ runTest(
 
 runTest(
   "rebuild tree from log",
-  ["./", "tell-the-universe", "an-expression"],
-  function(expect, done, jsToEz, tellTheUniverse, anExpression) {
+  ["./", "a-wild-universe-appeared", "an-expression"],
+  function(expect, done, jsToEz, aWildUniverseAppeared, anExpression) {
 
     function bar() {}
 
-    var universe = tellTheUniverse.called("test").withNames({anExpression: "an-expression"})
+    var universe = aWildUniverseAppeared("test", {anExpression: "an-expression"})
 
     // jsToEz.loud = true
 
     var tree = anExpression.tree()
-    tree.logTo(universe)
-    universe("anExpression.tree", tree.id)
+    tree.logTo(universe, true)
     jsToEz(bar.toString(), tree)
 
     anExpression.forgetTrees()
 
-    expect(anExpression.getTree(tree.id)).to.be.undefined
+    expect(function() {
+      anExpression.getTree(tree.id)
+    }).to.throw
 
     universe.playItBack()
 

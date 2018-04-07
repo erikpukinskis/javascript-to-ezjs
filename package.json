@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "run-test": "*",
-    "tell-the-universe": "*"
+    "a-wild-universe-appeared": "*"
   },
   "scripts": {
     "test": "node test.js"

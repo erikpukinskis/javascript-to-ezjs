@@ -174,8 +174,8 @@ module.exports = library.export(
           }
 
           add(valueExpression, tree)
-
-          tree.addKeyPair(literal.id, key, valueExpression.id)
+          
+          tree.addKeyValuePair(literal.id, key, valueExpression.id)
         }
 
         log("  *  object literal!", source)
