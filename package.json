@@ -4,8 +4,9 @@
   "description": "Convert a subset of JavaScript into a simple JSON-like format for editing",
   "main": "js-to-ezjs.js",
   "dependencies": {
+    "an-expression": "^0.56.0",
     "module-library": "*",
-    "an-expression": "*"
+    "parse-a-little-js": "^0.6.0"
   },
   "devDependencies": {
     "run-test": "*",

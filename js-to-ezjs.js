@@ -2,8 +2,8 @@ var library = require("module-library")(require)
 
 module.exports = library.export(
   "javascript-to-ezjs",
-  ["an-expression"],
-  function(anExpression) {
+  ["an-expression", "parse-a-little-js"],
+  function(anExpression, parseALittleJs) {
 
     var stack
 
@@ -16,254 +16,63 @@ module.exports = library.export(
     // javascriptTo.loud = true
 
     function toEzjs(source) {
+      if (!source) { return }
 
       source = source.trim()
 
       if (source.length < 1) { return }
 
       var tree = this
+      var segments = parseALittleJs(source)
 
-      var functionLiteralStart = source.match(/^ *function ?([^(]*) ?([(][^)]*[)])/)
-      var functionLiteralEnd = !functionLiteralStart && source.match(/^\}$/)
+      var outroOnly = segments.outro && segments.outro.length > 0 && !segments.middle && !segments.intro && !segments.identifierIsh
 
-      var booleanLiteral = !functionLiteralEnd && source.match(/^(true|false)($|[^\w].*$)/i)
+      if (outroOnly) {
+        var closer = segments.outro.slice(0,1)
+        var remainder = outro.slice(1)+outro.remainder||""
+        log("  *  closer", source)
+        pop(stack, closer)
+        toEzjs.call(tree, remainder)
+        return
+      }
 
-      var functionCallStart = !booleanLiteral && source.match(/^([^ ,"'(){}]+)[(](.*)$/)
-      var functionCallEnd = !functionCallStart && source.match(/^(.*)\)$/)
+      var expression = parseALittleJs.detectExpression(segments)
 
-      var stringLiteral = !functionCallEnd && source.match(/^(".*"),?$/)
+      expression.id = anExpression.id()
+      if (expression.kind != "function literal") {
+        ensureRoot(tree)
+      }
+      expression.index = tree.reservePosition()
 
-      var arrayLiteralStart = !stringLiteral && source.match(/^\[$/)
-      var arrayLiteralEnd = !arrayLiteralStart && source.match(/^(.*)\]$/)
-
-      var objectLiteral = !arrayLiteralEnd && source.match(/^(\{[^:]+:.*\})([^{]*)$/)
-
-      var comment = !objectLiteral && source.match(/^\/\//)
-
-      var returnStatement = !comment && source.match(/^return (.*)$/)
-
-      var variableAssignment = !returnStatement && source.match(/^var ([^-{(]+) *= *(.*)$/)
-
-      var understood = true
-
-      if (comment) {
-        // do nothing
-
-      } else if (returnStatement) {
-        expression = {
-          kind: "return statement",
-          id: anExpression.id(),
-          index: tree.reservePosition(),
-        }
-        addToParent(stack, expression)
-        stack.push(expression)
-        log("  *  return statement!", source)
-        toEzjs.call(tree, returnStatement[1])
-      } else if (variableAssignment) {
-        expression = {
-          kind: "variable assignment",
-          id: anExpression.id(),
-          variableName: variableAssignment[1],
-          isDeclaration: true,
-          index: tree.reservePosition(),
-        }
-
-        addToParent(stack, expression)
-
-        stack.push(expression)
-        log("  *  assignment!", source)
-        toEzjs.call(tree, variableAssignment[2])
-
-      } else if (functionLiteralStart) {
-        var name = functionLiteralStart[1]
-
-        expression = {
-          kind: "function literal",
-          id: anExpression.id(),
-          index: tree.reservePosition(),
-        }
+      if (expression.kind == "function literal") {
 
         log("  *  function literal start!", source)
 
-        if (name.length > 0) {
-          expression.functionName = name
-        }
-
-        expression.argumentNames = argumentNames(functionLiteralStart[2])
-
         expression.body = []
 
-        addToParent(stack, expression)
+        addToParent(stack, expression, tree)
 
         stack.push(expression)
 
-        return expression
+        toEzjs.call(tree, segments.remainder)
 
-      } else if (functionLiteralEnd) {
-        // toEzjs.call(tree, functionLiteralEnd[1])
-        log("  *  function literal end!", source)
-        pop(stack, "function literal")
-
-      } else if (functionCallStart) {
+      } else if (expression.kind == "function call") {
         log("  *  function call start!", source)
+        expression.arguments = []
+        addToParent(stack, expression, tree)
+        stack.push(expression)
 
-        var call = {
-          kind: "function call",
-          id: anExpression.id(),
-          functionName: functionCallStart[1],
-          arguments: [],
-          index: tree.reservePosition(),
-        }
+        toEzjs.call(tree, segments.remainder)
 
-        addToParent(stack, call)
-        stack.push(call)
+      } else if (expression.kind == "leaf expression") {
 
-        toEzjs.call(tree, functionCallStart[2])
+        addToParent(stack, expression, tree)
 
-      } else if (functionCallEnd) {
-        toEzjs.call(tree, functionCallEnd[1])
+        add(expression, tree)
 
-        var expression = pop(stack, "function call")
-
-        addAt(expression.index, expression, tree)
-
-        log("  *  call end!", source)
-
-      } else if (stringLiteral) {
-        var literal = {
-          kind: "string literal",
-          id: anExpression.id(),
-          string: eval(stringLiteral[1]),
-        }
-
-        addToParent(stack, literal)
-
-        add(literal, tree)
-
-        log("  *  string literal!", source)
-      } else if (objectLiteral) {
-
-        var source = objectLiteral[1]
-        var extra = objectLiteral[2].trim()
-
-        try {
-          var object = JSON.parse(source)
-        } catch (e) {
-          throw new Error("The source code "+source+" looked like an object, but it failed to parse. Objects need to be valid JSON")
-        }
-
-        var literal = anExpression.objectLiteral({})
-
-        addToParent(stack, literal)
-        add(literal, tree)
-
-        for(var key in object) {
-          var value = object[key]
-          switch(typeof value)  {
-          case "string":
-            var valueExpression = anExpression.stringLiteral(value)
-            break;
-          case "number":
-            var valueExpression = anExpression.numberLiteral(value)
-            break;
-          case "boolean":
-            var valueExpression = anExpression.boolean(value)
-            break;
-          default:
-            throw new Error("Objects can only have string, number, or boolean values")
-          }
-
-          add(valueExpression, tree)
-          
-          tree.addKeyValuePair(literal.id, key, valueExpression.id)
-        }
-
-        log("  *  object literal!", source)
-
-        if (extra) {
-          toEzjs.call(tree, extra)
-        }
-
-      } else if (booleanLiteral) {
-        if (booleanLiteral[1] == "true") {
-          var boo = anExpression.true()
-        } else {
-          var boo = anExpression.false()
-        }
-        addToParent(stack, boo)
-        var extra = booleanLiteral[2]
-        if (extra) {
-          toEzjs.call(tree, extra)
-        }
-      } else if (arrayLiteralStart) {
-        log("  *  array literal!", source)
-        var arr = {
-          kind: "array literal", 
-          id: anExpression.id(),
-          items: [],
-          index: tree.reservePosition()
-        }
-        addToParent(stack, arr)
-
-        stack.push(arr)
-      } else if (arrayLiteralEnd) {
-        toEzjs.call(tree, arrayLiteralEnd[1])
-        var arr = pop(stack, "array literal")
-        addAt(arr.index, arr, tree)
-        log("  *  array end!", source)
+        log("  *  leaf expression!", source)
       } else {
-
-        understood = false
-
-        // ROUND 2 of matching!
-
-        var argumentString = source.match(/(.*,.*)([)]?)/)
-
-        var booleanLiteral = !argumentString && source.match(/^(true|false)$/)
-
-        var numberLiteral = !booleanLiteral && source.match(/^[0-9][0-9.]*$/)
-
-        var reference = !numberLiteral && source.match(/^[^ -(){}.]+$/)
-      }
-
-      if (understood) {
-        // we're good
-
-      } else if (argumentString) {
-        log("  *  argument string!", source)
-
-        var argSources = argumentString[0].split(",")
-
-        argSources.forEach(toEzjs.bind(tree))
-
-      } else if (numberLiteral) {
-        log("  *  number literal!", source)
-
-        var literal = {
-          kind: "number literal",
-          id: anExpression.id(),
-          number: eval(source),
-        }
-
-        addToParent(stack, literal)
-
-        add(literal, tree)
-
-      } else if (reference) {
-        log("  *  reference!", source)
-
-        var ref = {
-          kind: "variable reference",
-          id: anExpression.id(),
-          variableName: source,
-        }
-
-        addToParent(stack, ref)
-
-        add(ref, tree)
-
-      } else {
-        log(" !!! don't understand:", source)
+        throw new Error(" !!! don't understand: "+source)
       }
 
 
@@ -284,7 +93,7 @@ module.exports = library.export(
 
       if (functionLiteral) {
         log("  + Adding "+expression.kind+" ("+expression.id+") line at "+index+" to "+functionLiteral.id)
-        tree.addLine(functionLiteral.id, index, expression)
+        tree.addLine(functionLiteral, index, expression)
       } else {
         log("  + Adding "+expression.kind+" ("+expression.id+") at "+index)
         tree.addExpressionAt(index, expression)
@@ -297,21 +106,37 @@ module.exports = library.export(
       }
     }
 
-    function pop(stack, kind) {
+    function pop(stack, closer) {
       var top = stack.pop()
 
-      if (!top || top.kind != kind) {
+      if (!top || top.kind != kindsForCloser[closer]) {
         throw new Error("Thought we were closing an "+kind+", but the top of the stack is "+(top && what(top)))
       }
 
       return top
     }
 
-    function addToParent(stack, item) {
+    var kindsForCloser = {
+      ")": "function call",
+      "}": "function literal",
+    }
+
+    function ensureRoot(tree) {
+      if (!tree.rootId()) {
+        var position = tree.reservePosition()
+        if (position != 0) {
+          throw new Error("Tree has no root, but we already reserved positions")
+        }
+        tree.addExpressionAt(0, anExpression.functionLiteral())
+      }
+    }
+
+    function addToParent(stack, item, tree) {
       var parent = stack[stack.length-1]
 
       if (stack.length < 1) {
-        log(" !!! no parent to add to")
+        item.lineIn = tree.rootId()
+        addAt(item.index, item, tree)
         return
       }
 
@@ -319,7 +144,7 @@ module.exports = library.export(
 
       switch (parent.kind) {
         case "function literal":
-          item.lineIn = parent
+          item.lineIn = parent.id
           break;
         case "function call":
           message += " as argument"
@@ -372,27 +197,6 @@ module.exports = library.export(
       }
     }
 
-    function argumentNames(func) {
-      if (typeof func == "string") {
-        var firstLine = func
-      } else {
-        var firstLine = func.toString().match(/.*/)[0]
-      }
-
-      var argString = firstLine.match(/[(]([^)]*)/)[1]
-
-      var args = argString.split(/, */)
-
-      var names = []
-      for(var i=0; i<args.length; i++) {
-        if (args[i].length > 0) {
-          names.push(args[i])
-        }
-      }
-
-      return names
-    }
-
     function javascriptToEzjs(source, tree) {
       stack = []
       var lines = source.split("\n")
@@ -410,6 +214,7 @@ module.exports = library.export(
       if (stack.length) {
         var root = stack.pop()
         if (stack.length) {
+          debugger
           throw new Error("extra stuff on the stack?")
         } else if (typeof root.index == "undefined") {
           throw new Error("something left on the stack with no index?")
@@ -428,6 +233,8 @@ module.exports = library.export(
       return tree
     }
 
+
+    // This lets you JSON.parse circular objects like: JSON.parse(foo = {a: foo}, withCircularDependencies, 2)
 
     var cache = []
     function withCircularDependecies(key, value) {

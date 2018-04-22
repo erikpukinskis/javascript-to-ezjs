@@ -1,6 +1,154 @@
 var runTest = require("run-test")(require)
 
-// runTest.only("function literals as arguments")
+runTest(
+  "identifiers",
+  ["./"],
+  function(expect, done, jsToEz) {
+    var tree = jsToEz("bar")
+    var identifierId = tree.getListItem("body", tree.rootId(), 0)
+
+    expect(tree.getAttribute("kind", identifierId)).to.equal("leaf expression")
+    expect(tree.getAttribute("string", identifierId)).to.equal("bar")
+
+    done()
+  }
+)
+
+runTest.only("stop")
+
+runTest(
+  "assignment",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var tree = jsToEz("foo = bar")
+    var identifierId = tree.getListItem("body", tree.rootId(), 0)
+
+    expect(tree.getAttribute("kind", identifierId)).to.equal("leaf expression")
+    expect(tree.getAttribute("string", identifierId)).to.equal("bar")
+    expect(tree.getAttribute("leftHandSide", identifierId)).to.equal("foo")
+
+    done()
+  }
+)
+
+runTest(
+  "declaration",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var tree = jsToEz("var foo = bar")
+    var identifierId = tree.getListItem("body", tree.rootId(), 0)
+
+    expect(tree.getAttribute("leftHandSide", identifierId)).to.equal("foo")
+    expect(tree.getAttribute("isDeclaration", identifierId)).to.equal(true)
+
+    done()
+  }
+)
+
+runTest(
+  "call",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var tree = jsToEz("groove()")
+    var callId = tree.getListItem("body", tree.rootId(), 0)
+
+    expect(tree.getAttribute("kind", callId)).to.equal("function call")
+    expect(tree.getAttribute("functionName", callId)).to.equal("groove")
+
+    done()
+  }
+)
+
+runTest(
+  "argument",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var tree = jsToEz("groove(foo)")
+    var callId = tree.getListItem("body", tree.rootId(), 0)
+
+    expect(tree.getAttribute("kind", callId)).to.equal("function call")
+
+    var argumentId = tree.getListItem("body", callId, 0)
+
+    expect(tree.getAttribute("kind", argumentId)).to.equal("leaf expression")
+
+    expect(tree.getAttribute("string", argumentId)).to.equal("foo")
+
+    done()
+  }
+)
+
+runTest(
+  "lots of closers on one line",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var source = "function () {\n"
+      + "  function() {\n"
+      + "    bridge.send(\n"
+      + "      hi)}}"
+
+    var tree = jsToEz(source)
+
+    var funcId = tree.rootId()
+
+    expect(tree.expressionIds.length).to.equal(4)
+
+    done()
+  }
+)
+
+runTest(
+  "var keyword declares an identifier",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var source = "var foo = bar"
+    var tree = jsToEz(source)
+    var rootId = tree.rootId()
+
+    expect(tree.getAttribute("kind", rootId).to.equal("string"))
+    expect(tree.getAttribute("variableName", rootId).to.equal("foo"))
+    expect(tree.getAttribute("isDeclaration", rootId).to.equal(true))
+
+    done()
+  }
+)
+
+runTest(
+  "previously declared identifiers aren't seen as strings",
+  ["./"],
+  function(expect, done, jsToEz) {
+
+    var source = "function(boop) {\n"+
+      "  var foo = hi\n"+
+      "  boop(foo)}"
+
+    var tree = jsToEz(source)
+    var rootId = tree.rootId()
+    expect(tree.getAttribute("kind", rootId)).to.equal("function literal")
+    expect(tree.getListItem("arguments", rootId, 0)).to.equal("boop")
+
+    var definitionId = tree.getListItem("body", rootId, 0)
+    expect(tree.getAttribute("kind", definitionId)).to.equal("string")
+    expect(tree.getAttribute("string", definitionId)).to.equal("hi")
+
+    var callId = tree.getListItem("body", rootId, 1)
+    expect(tree.getAttribute("kind", callId)).to.equal("function call")
+    expect(tree.getAttribute("functionName", callId)).to.equal("boop")
+
+    var referenceId = tree.getListItem("arguments", callId, 0)
+    expect(tree.getAttribute("kind", referenceId)).to.equal("variable reference")
+    expect(tree.getAttribute("variableName", referenceId)).to.equal("foo")
+
+    done()
+  }
+)
+
 
 runTest(
   "function literals as arguments",
