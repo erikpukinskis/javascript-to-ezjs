@@ -1,5 +1,6 @@
 var runTest = require("run-test")(require)
 
+
 runTest(
   "identifiers",
   ["./"],
@@ -14,7 +15,6 @@ runTest(
   }
 )
 
-runTest.only("stop")
 
 runTest(
   "assignment",
@@ -47,6 +47,7 @@ runTest(
   }
 )
 
+
 runTest(
   "call",
   ["./"],
@@ -61,6 +62,7 @@ runTest(
     done()
   }
 )
+
 
 runTest(
   "argument",
@@ -81,6 +83,8 @@ runTest(
     done()
   }
 )
+
+runTest.only("stop")
 
 runTest(
   "lots of closers on one line",

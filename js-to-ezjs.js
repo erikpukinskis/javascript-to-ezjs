@@ -23,12 +23,14 @@ module.exports = library.export(
       if (source.length < 1) { return }
 
       var tree = this
-      var segments = parseALittleJs(source)
 
-      var outroOnly = segments.outro && segments.outro.length > 0 && !segments.middle && !segments.intro && !segments.identifierIsh
+      var segments = parseALittleJs(source)
+      var outro = segments.outro
+
+      var outroOnly = outro && outro.length > 0 && !segments.middle && !segments.intro && !segments.identifierIsh
 
       if (outroOnly) {
-        var closer = segments.outro.slice(0,1)
+        var closer = outro.slice(0,1)
         var remainder = outro.slice(1)+outro.remainder||""
         log("  *  closer", source)
         pop(stack, closer)
@@ -217,6 +219,7 @@ module.exports = library.export(
           debugger
           throw new Error("extra stuff on the stack?")
         } else if (typeof root.index == "undefined") {
+          debugger
           throw new Error("something left on the stack with no index?")
         } else if (root.index != 0) {
           throw new Error("left something on the stack other than the root?")
