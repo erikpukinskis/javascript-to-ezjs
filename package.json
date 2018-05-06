@@ -5,12 +5,20 @@
   "main": "js-to-ezjs.js",
   "dependencies": {
     "an-expression": "^0.57.0",
+    "make-request": "^0.41.0",
     "module-library": "*",
-    "parse-a-little-js": "^0.8.0"
+    "web-element": "^0.97.0"
   },
   "devDependencies": {
     "run-test": "*",
-    "a-wild-universe-appeared": "*"
+    "a-wild-universe-appeared": "*",
+    "web-site": "*",
+    "web-element": "*",
+    "browser-bridge": "^0.140.0",
+    "basic-styles": "^0.31.0",
+    "child_process": "*",
+    "bridge-module": "*",
+    "parse-a-little-js": "^0.11.0"
   },
   "scripts": {
     "test": "node test.js"
